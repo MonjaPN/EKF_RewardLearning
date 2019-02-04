@@ -22,7 +22,7 @@ clear
 
 %% RL parameters, fit_par is a structure containing parameter starting values
 fit_par.alpha       = 0.3;  % learning rate of the simulated agent
-fit_par.beta_rew    = 2;    % reward sensitivity
+fit_par.beta    = 2;    % reward sensitivity
 
 
 % Data contains:
@@ -67,7 +67,7 @@ for i_subj = 1 : n_subj
         %Reduce to data of 1 distribution
         subj_data = simulation_RL_trials_1((simulation_RL_trials_1(:,2)==i_subj),:);
         %Reduce to relevant variables
-        
+        subj_data = subj_data(:,[7,8]);
     
     else
         
@@ -79,7 +79,7 @@ for i_subj = 1 : n_subj
     
     
     %%Set initial values for fitting
-    x0 = [fir_par.alpha, fit_par.beta]; %uses initial values as optimal starting values
+    x0 = [fit_par.alpha, fit_par.beta]; %uses initial values as optimal starting values
     D =  subj_data;
     
     %Sets options for optimization. It might spam your console if you don't
@@ -92,7 +92,7 @@ for i_subj = 1 : n_subj
     mcon.ub = [1,Inf,Inf,1,1];
     
     
-    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,D),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
+    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_RWmodel(x,D),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
     
     
     
