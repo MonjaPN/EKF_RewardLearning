@@ -183,29 +183,29 @@ end
 if draw_output == 1
 
     
-    out_fig1 = [data_out,'simulation_scatter_',num2str(i_inputs),'.png'];
-    %figure.Position=[0 0 [] []];
-    figure(1)
+out_fig1 = [data_out,'simulation_scatter_',num2str(i_inputs),'.png'];
+%figure.Position=[0 0 [] []];
+figure(1)
 
-    subplot(3,2,1)
-    hold on
-    bar(1:4,m_beta)
-    errorbar(1:4,m_beta,std_beta,'.')
-    ylabel('beta')
+subplot(3,2,1)
+hold on
+bar(1:4,m_beta)
+errorbar(1:4,m_beta,std_beta,'.')
+ylabel('beta')
 
-    subplot(3,2,2)
-    hold on
-    bar(1:4,performance)
-    errorbar(1:4,performance,std_performance,'.')
-    ylabel('trials rewarded')
+subplot(3,2,2)
+hold on
+bar(1:4,performance)
+errorbar(1:4,performance,std_performance,'.')
+ylabel('trials rewarded')
 
-    subplot(3,2,3:6)
-    hold on
-    scatter(eval_fit(:,3),eval_fit(:,5),[],eval_fit(:,1),'filled')
-    legend({'high_b low_VAR','high_b high_VAR','low_b low_VAR','low_b highVAR'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
-    ylabel('correct choices')
-    xlabel('beta')
-     saveas(gcf,out_fig1)
+subplot(3,2,3:6)
+hold on
+scatter(eval_fit(:,3),eval_fit(:,5),[],eval_fit(:,1),'filled')
+legend({'high_b low_VAR','high_b high_VAR','low_b low_VAR','low_b highVAR'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
+ylabel('correct choices')
+xlabel('beta')
+ saveas(gcf,out_fig1)
 
 
 
