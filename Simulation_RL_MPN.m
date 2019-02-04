@@ -14,7 +14,7 @@ clear
 draw_output = 1;
 
 %  define parameters
-sim_par.beta_mean = [7, 7, 2, 2];
+sim_par.beta_mean = [5, 5, 2, 2];
 sim_par.beta_std = [0.1, 0.9, 0.1, 0.9];
 sim_par.alpha = 0.6;
 
