@@ -92,7 +92,7 @@ for i_subj = 1 : n_subj
     mcon.ub = [1,Inf,Inf,1,1];
     
     
-    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_RWmodel(x,D),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
+    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,D),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
     
     
     

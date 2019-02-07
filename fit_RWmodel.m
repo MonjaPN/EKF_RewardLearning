@@ -18,9 +18,9 @@ choice = D(:,1);
  
 %Initialization of values for the model
 L_t = zeros(length(choice),1);    %initial value sum of squared error
-weights = zeros(length(choice),8); % initial action weights
-RPE = zeros(length(choice),8);  %initial RPEs
-Q = zeros(length(choice),8);    %initial Q values
+weights = zeros(length(choice),2); % initial action weights
+RPE = zeros(length(choice),2);  %initial RPEs
+Q = zeros(length(choice),2);    %initial Q values
 %V = zeros(length(choice),4);
 
 
