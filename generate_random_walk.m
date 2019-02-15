@@ -1,4 +1,8 @@
 function out = generate_random_walk(n_runs, n_trials)
+% Generates the random walk as in the App together with rewarded choice and
+% reward vectors for blue and green. Generates n_runs walks with n_trials
+% trials
+
 
 for i_run = 1:n_runs
 %% Generate random walk
