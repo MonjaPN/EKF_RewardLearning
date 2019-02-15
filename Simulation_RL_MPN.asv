@@ -78,10 +78,9 @@ for i_p = 1:size(beta_values,1) % loop through agents
     sim_par_run.beta = beta_values(i_p,i_r);
     sim_par_run.reward_grid = sim_par.reward_grid(:,:,i_r);
     sim_par_run.inputs = sim_par.inputs(:,i_r);
-    sim_par_run.correct_option = sim_par.correct_option(:,i_r);
+    sim_par_run.correct_option = sim_par.correct_option(:,run);
     sim_par_run.gamma = sim_par.gamma;
     sim_par_run.n_trials = sim_par.trials;
-    sim_par_run.dist = dist(i_p);
     
 
 
