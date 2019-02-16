@@ -78,9 +78,10 @@ for i_p = 1:size(beta_values,1) % loop through agents
     sim_par_run.beta = beta_values(i_p,i_r);
     sim_par_run.reward_grid = sim_par.reward_grid(:,:,i_r);
     sim_par_run.inputs = sim_par.inputs(:,i_r);
-    sim_par_run.correct_option = sim_par.correct_option(:,run);
+    sim_par_run.correct_option = sim_par.correct_option(:,i_r);
     sim_par_run.gamma = sim_par.gamma;
     sim_par_run.n_trials = sim_par.trials;
+    sim_par_run.dist = dist(i_p);
     
 
 
@@ -95,7 +96,6 @@ run = ones(sim_par.trials,1)*i_r;
 data_sub = [ID,run,out];
 
 %Store summary and trialwise simulation
-summary = [summary; summary_simulation];
 data = [data;data_sub];
 
 
@@ -114,15 +114,21 @@ if simulate_data
  
     D = data_fit;
 else
-
-    D = load(data_path); % Load empirical data (make sure coloumns have same order/content as simulated data)
+    % Load empirical data (make sure coloumns have same order/content as simulated data) 
+    %data_path and IDs to analyze have to be defined
+    D = read_app_data(IDs,data_path);
 end
 
-
-for i_fits = 1:length(data_fit)/150;
+runs = 0;
+for i_p = 1:length(unique(D(:,6)))
    
-    ID = D(i_fits*150,6);
-    Run = D(i_fits*150,7);
+    DID = D(D(:,6)==i_p,:);
+    
+    for i_r = 1:length(unique(DID(:,7)))
+        
+    cD = DID(DID(:,7)==i_r,:);
+    ID = cD(1,6);
+    Run = cD(1,7);
     %options = optimset('Display','off');
     %options = optimoptions(@fminunc,'Algorithm','quasi-newton','Display','off');
     options = optimoptions('fmincon','Display','off','Algorithm','sqp');
@@ -133,12 +139,18 @@ for i_fits = 1:length(data_fit)/150;
     mcon.lb = [0,0];
     mcon.ub = [1,Inf];
     
-    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,D),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
+    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,cD),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
     estp.alpha = xout(:,1); %1./(1+exp(xout(:,1)));
     estp.beta = xout(:,2); %exp(xout(:,2));
 
-    eval_fit(i_fits,:) = [ID, Run, sim_par.n_trials, sim_par.alpha, sim_par.beta, estp.alpha, estp.beta, estp.alpha - sim_par.alpha, estp.beta - sim_par.beta, fval];
+  
+    eval_fit(runs,:) = [ID, Run, sim_par.n_trials, sim_par.alpha, sim_par.beta, estp.alpha, estp.beta, estp.alpha - sim_par.alpha, estp.beta - sim_par.beta, fval];
+    if simulate_data == 0
+    fitted_data(runs) = get_fitted_values(cD, estp);
+    runs = runs + 1;
+    end
 end
+
 end
 %% Plotting
 
