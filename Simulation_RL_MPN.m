@@ -12,6 +12,8 @@ clear
 
 % set =1, if plots and data .csv should be written
 draw_output = 1;
+simulate_data = 1;
+fit_data = 1;
 
 %data_out = pwd;
 data_out = 'C:\Users\Monja\PC_EKF\04_Review\RL\Output\';
@@ -31,7 +33,7 @@ sim_par.gamma = 1;
 
 
 %% Generate beta values
-
+if simulate_data
 dist = [];
 data = [];
 tmp = 1;
@@ -107,7 +109,7 @@ end
 data_fit = data(:,[8,9,11,12,13,1,2,3,4,5]); %Reduce simulated data to the coloumns relevant for fitting
 data_table = array2table(data, 'VariableNames',{'ID','Run','Trial','Group','beta','Estimated_Prob','RPE_prob','choice','reward','correct_choice','rewarded_choice','reward_blue','reward_green'}); %Get a table to export for R / nicer plotting 
 % !! correct choice = choice == real prob>.5, good_option is the rewarded option for each trial 
-
+end
 %% Fit model 
 if fit_data
 if simulate_data
@@ -116,6 +118,9 @@ if simulate_data
 else
     % Load empirical data (make sure coloumns have same order/content as simulated data) 
     %data_path and IDs to analyze have to be defined
+    IDs = [1,4]
+    % IDs = []; for all IDs leave IIDs empty
+    data_path = 'C:\Users\Anne\Documents\GitHub\EKF_RewardLearning\app_data_trial-07-02-2019.xlsx'
     D = read_app_data(IDs,data_path);
 end
 

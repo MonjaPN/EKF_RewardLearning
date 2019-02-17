@@ -18,8 +18,15 @@ tbl = tabulate(T.subject_id_app);
  end
 
   Dcomplete = [choice+1, (reward/50), draw_blue, reward_grid,T.subject_id_app, T.run_ind, T.trial_ind,T.p_reward_a]; %concatenate data vector
+  
+  if ~isempty(ID)
   DIDs = Dcomplete(ismember(T.subject_id_app,ID),:);
   IDTab = T(ismember(T.subject_id_app,ID),:);
+  else 
+      DIDs = Dcomplete
+      IDTab = T
+      
+  end
 
     for i=1:length(IDTab.trial_ind)
 
