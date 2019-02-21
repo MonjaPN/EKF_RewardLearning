@@ -100,7 +100,7 @@ function [data_sub] = Simulate_influenca(sim_par)
  
     time = 1:sim_par.n_trials;
     beta = ones(sim_par.n_trials,1)*sim_par.beta;
-    data_sub = [time', repmat(sim_par.dist,sim_par.n_trials,1),beta,est_prob,RPE_alpha,choice, (reward/50), correct_ground, inputs, reward_grid];
+    data_sub = [time', repmat(sim_par.dist,sim_par.n_trials,1),beta,est_prob,RPE_alpha,choice, (reward/50), correct_ground,double(inputs==1), inputs, reward_grid];
  
  
 

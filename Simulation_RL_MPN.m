@@ -64,10 +64,10 @@ end
 %% Generate random walk and input/correct sequence + reward grid
 rdm_wlk = generate_random_walk(sim_par.runs, sim_par.trials);
 
-sim_par.inputs = rdm_walk.inputs;
-sim_par.correct_option = rdm_walk.correct_option;
-sim_par.reward_grid = rdm_walk.reward_grid;
-sim_par.probs = rdm_walk.probs;
+sim_par.inputs = rdm_wlk.inputs;
+sim_par.correct_option = rdm_wlk.correct_option;
+sim_par.reward_grid = rdm_wlk.reward_grid;
+sim_par.probs = rdm_wlk.probs;
 
 %% Simulate Reward-Learning with separate Q values for left / right
 
@@ -90,7 +90,7 @@ for i_p = 1:size(beta_values,1) % loop through agents
 out = Simulate_influenca(sim_par_run);
 
 % Get summary results of each agent/run
-summary_simulation(i_p,:,i_r) = [i_p,i_r,dist(i_p),sim_par_run.alpha, sim_par_run.beta, sum(out(:,7))/sim_par.trials, sum(out(:,8))];
+summary_simulation(i_p,:,i_r) = [i_p,i_r,dist(i_p),sim_par_run.alpha, sim_par_run.beta, sum(out(:,7))*50/sim_par.trials, sum(out(:,8))];
 
 ID = ones(sim_par.trials,1)*i_p;
 run = ones(sim_par.trials,1)*i_r;
@@ -106,8 +106,8 @@ data = [data;data_sub];
 
 end
 
-data_fit = data(:,[8,9,11,12,13,1,2,3,4,5]); %Reduce simulated data to the coloumns relevant for fitting
-data_table = array2table(data, 'VariableNames',{'ID','Run','Trial','Group','beta','Estimated_Prob','RPE_prob','choice','reward','correct_choice','rewarded_choice','reward_blue','reward_green'}); %Get a table to export for R / nicer plotting 
+data_fit = data(:,[8,9,11,13,14,1,2,3,4,5]); %Reduce simulated data to the coloumns relevant for fitting
+data_table = array2table(data, 'VariableNames',{'ID','Run','Trial','Group','beta','Estimated_Prob','RPE_prob','choice','reward','correct_choice','draw_blue','rewarded_choice','reward_blue','reward_green'}); %Get a table to export for R / nicer plotting 
 % !! correct choice = choice == real prob>.5, good_option is the rewarded option for each trial 
 end
 %% Fit model 
@@ -153,7 +153,7 @@ for i_p = 1:length(unique(D(:,6)))
 
   
  %   eval_fit(runs,:) = [ID, Run, sim_par.n_trials, sim_par.alpha, sim_par.beta, estp.alpha, estp.beta, estp.alpha - sim_par.alpha, estp.beta - sim_par.beta, fval];
- eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval];
+    eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval];
  
     fitted_data(runs) = get_fitted_values(cD, estp);
     fitted_data_plot = [fitted_data_plot;fitted_data(runs).run];
