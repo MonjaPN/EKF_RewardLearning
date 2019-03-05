@@ -8,7 +8,7 @@
 % Last correction 31.01.2019 correct vector
 %================================================================
 
-clear
+%clear
 
 % set =1, if plots and data .csv should be written
 draw_output = 1;

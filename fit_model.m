@@ -4,7 +4,7 @@
 %v1.1 Dec-19 2017, Seminar Computational Psychiatry
 %
 
-function L = fit_model_NBK(x,D)
+function L = fit_model(x,D)
 
 %Model Parameters, original units
 alpha = x(1);

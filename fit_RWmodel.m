@@ -17,10 +17,11 @@ choice = D(:,1);
 %cond_stimulus = D(:,1); 
  
 %Initialization of values for the model
-L_t = zeros(length(choice),1);    %initial value sum of squared error
-weights = zeros(length(choice),2); % initial action weights
-RPE = zeros(length(choice),2);  %initial RPEs
-Q = zeros(length(choice),2);    %initial Q values
+L_t = zeros(length(choice),1);      %initial value sum of squared error
+weights = zeros(length(choice),2);  %initial action weights
+RPE = zeros(length(choice),2);      %initial RPEs
+Q = zeros(length(choice),2);        %initial Q values
+est_prob = 0.5 * ones(length(choice),1); % initial estimates of probability 
 %V = zeros(length(choice),4);
 
 
@@ -28,37 +29,41 @@ Q = zeros(length(choice),2);    %initial Q values
 
 
 %loop through trials
-for i = 1:length(choice)
+for i_t = 1:length(choice)
     
 
     % calculate weights -> implement one action weight per condition and choice
 %     weights(i,cond_stimulus(i)) = Q(i,cond_stimulus(i)); %nogo
 %     weights(i,cond_stimulus(i)+4) = Q(i,cond_stimulus(i)+4) + a_bias; % go
-
+      weights(i_t,1) = Q(i_t,1);
+      weights(i_t,2) = Q(i_t,2);
 
     
     
-    %compute reward prediction errors, RPEs, according to delta rule,
+    %calculate reward prediction errors, RPEs, according to delta rule,
     %single update
-    RPE(i,choice(i,1)) = reward(i,1) - Q(i,choice(i,1));
+    RPE(i_t,choice(i_t,1)) = reward(i_t,1) - Q(i_t,choice(i_t,1));
 
     
     
     %updates Q values
 
-    if i < length(choice)
+    if i_t < length(choice)
+        %???Calculate choic probability
+        est_prob(i_t+1,1) = est_prob(i_t,1) + alpha(i_t,1);
         
-            Q(i+1,1) = Q(i,1) + alpha * RPE(i,1);
-            Q(i+1,2) = Q(i,2) + alpha * RPE(i,2);
+        %Update Q-values
+        Q(i_t+1,1) = Q(i_t,1) + alpha * RPE(i_t,1);
+        Q(i_t+1,2) = Q(i_t,2) + alpha * RPE(i_t,2);
         
     end
     
-    %???Calculate choic probability
-    % ...
+
     
     %calculates loglikelihood based on discrepancies between observed and
     %predicted choices
-    L_t(i) = log(action_probability(i));
+    %L_t(i) = log(action_probability(i));
+    L_t(i_t) = log( exp(Q(i_t,choice(i_t,1)) .* beta) / (exp(Q(i_t,1) .* beta) + exp(Q(i_t,2) .* beta)));
    
  
 end

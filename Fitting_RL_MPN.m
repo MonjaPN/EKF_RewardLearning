@@ -24,7 +24,7 @@ clear
 fit_par.alpha       = 0.3;  % learning rate of the simulated agent
 fit_par.beta    = 2;    % reward sensitivity
 
-
+count = 1;
 % Data contains:
 
 % data output from Simulation_RL_MPN
@@ -51,7 +51,7 @@ if simulate_flag == 0
     
 else
     
-    %Simulation_RL_MPN;
+    Simulation_RL_MPN;
     n_subj = 4; %number of beta distributions
     Data = 'C:\Users\Monja\PC_EKF\04_Review\RL\Output\simulation_RL_trials_1.csv'; %add path of app data
     load(Data)
@@ -92,25 +92,41 @@ for i_subj = 1 : n_subj
     mcon.ub = [1,Inf,Inf,1,1];
     
     
-    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,D),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
+    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_RWmodel(x,D),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
     
     
     
 %% Store output
-%original units, only to be used when fitting is run with original scale
+% %original units, only to be used when fitting is run with original scale
 % if simulate_flag == 0
 % 
-%     eval_fit(count,:) = [data_mat(i*240,1),data_mat(i*240,2),xout(:,1),xout(:,4),xout(:,2),xout(:,3),xout(:,5), fval];
+%     eval_fit(count,:) = [data_mat(i*150,1),data_mat(i*150,2),xout(:,1),xout(:,4),xout(:,2),xout(:,3),xout(:,5), fval];
 %     
 % else
 %     
-%     eval_fit(count,:) = [data_mat(i*240,1),xout(:,1),xout(:,4),xout(:,2),xout(:,3),xout(:,5), fval];
+%     eval_fit(count,:) = [data_mat(i*150,1),xout(:,1),xout(:,4),xout(:,2),xout(:,3),xout(:,5), fval];
 %     
 % end
+% 
+% count = count + 1;
+    
 
-count = count + 1;
-    
-    
+%transformed units
+estp.alpha = xout(:,1); %1./(1+exp(xout(:,1)));
+estp.beta = xout(:,2); %exp(xout(:,2));
+
+eval_fit(i_subj,:) = [i_subj, sim_par.n_trials, sim_par.alpha, sim_par.beta, estp.alpha, estp.beta, estp.alpha - sim_par.alpha, estp.beta - sim_par.beta, fval, sum(reward)/sim_par.n_trials];
+
+%out.part(:,:) = [ones(sim_par.n_trials,1) .* i_p, [1:sim_par.n_trials]', ones(sim_par.n_trials,1) .* sim_par.alpha, ones(sim_par.n_trials,1) .* sim_par.beta, choice, choice_p, reward_grid, reward, Q, rgw, draw_blue, est_prob, RPE_alpha, chosen_p, result];
+out.part(:,:) = [ones(sim_par.n_trials,1) .* i_subj, [1:sim_par.n_trials]', ones(sim_par.n_trials,1) .* sim_par.alpha, ones(sim_par.n_trials,1) .* sim_par.beta, choice, choice_p, reward, Q, est_prob, RPE, chosen_p, result];
+
+%out.mat = [out.mat; out.part];
+
+
+
+
+
+
 end
 
 
