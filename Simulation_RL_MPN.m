@@ -5,161 +5,169 @@
 %
 % Code by Anne Kühnel 01/2019
 % Modified by Monja Neuser 01/2019 
-% Last correction 31.01.2019 correct vector
+% Modified Anne Kühnel 15.02.2019
 %================================================================
 
 %clear
 
 % set =1, if plots and data .csv should be written
 draw_output = 1;
+simulate_data = 1;
+fit_data = 1;
 
 %data_out = pwd;
 data_out = 'C:\Users\Monja\PC_EKF\04_Review\RL\Output\';
 
+
+%% Define simulation parameters
 %  define parameters
-sim_par.beta_mean = [5, 5, 2, 2];
-sim_par.beta_std = [0.1, 0.9, 0.1, 0.9];
+sim_par.beta_mean = [5, 5, 1, 1];
+sim_par.beta_std = [0, 0.9, 0, 0.9];
 sim_par.alpha = 0.6;
 
-sim_par.trials = 150;
-sim_par.simulations = 100;
-% generate distributions
+sim_par.trials = 150; % trials per run
+sim_par.simulations = 10; % agents per group
+sim_par.runs = 30; % runs per agent
+sim_par.gamma = 1;
 
-beta_values = [];
+
+
+%% Generate beta values
+if simulate_data
 dist = [];
 data = [];
+tmp = 1;
+beta_values = zeros(sim_par.simulations*length(sim_par.beta_mean),sim_par.runs);
 
 
-% Initialize beta values from distributions
+% Initialize beta values from distributions 2D Matrix of beta-values(rows =
+% agents, columns = runs) + 1 vector (dist) with length (agents) tracking
+% the group
 for i_dist = 1:4
+    if sim_par.beta_std(i_dist) > 0
     pd_start(1) = makedist('Normal','mu',sim_par.beta_mean(i_dist),'sigma',sim_par.beta_std(i_dist));
     %pd(i_dist) = truncate(pd_start,sim_par.beta_mean(i_dist)-2*sim_par.beta_std(i_dist),sim_par.beta_mean(i_dist)+2*sim_par.beta_std(i_dist));
-    pd(i_dist) = truncate(pd_start,sim_par.beta_mean(i_dist)-2*sim_par.beta_std(i_dist),sim_par.beta_mean(i_dist)+2*sim_par.beta_std(i_dist));
-    
-    %concatenated vector of beta values of length 'simulations', drawn from disributions
-    beta_values = [beta_values; random(pd(i_dist),sim_par.simulations,1)];
+    pd(tmp) = truncate(pd_start,sim_par.beta_mean(i_dist)-1*sim_par.beta_std(i_dist),sim_par.beta_mean(i_dist)+1*sim_par.beta_std(i_dist));
+ 
+    %fill beta values 
+    beta_values((i_dist-1)*sim_par.simulations+1:i_dist*sim_par.simulations,:) = random(pd(tmp),sim_par.simulations,sim_par.runs);
+    tmp = tmp + 1;
+    else
+    beta_values((i_dist-1)*sim_par.simulations+1:i_dist*sim_par.simulations,:) = sim_par.beta_mean(i_dist);
+   
+    end
     %concatenated vector with i_dist
     dist = [dist; repmat(i_dist,sim_par.simulations,1)];
 end
 
-
-% Loop through number of ??
-for i_inputs = 1:1
     
-    
-%% Generate random walk and input/correct sequence
+%% Generate random walk and input/correct sequence + reward grid
+rdm_wlk = generate_random_walk(sim_par.runs, sim_par.trials);
 
-%Initialize vector with probabilities for each trial
- probs = zeros(sim_par.trials,1);
- r = rand();
- probs(1) = 0.8 * (r > 0.5) + 0.2 * (r <= 0.5);
-
-    for i_trial  = 1:sim_par.trials-1
-        
-    	step = randn*0.1; % random scalar drawn from the standard normal distribution, convert to probability value
-        
-        %check if step is ok
-    	while (probs(i_trial) + step - 0.03 * (probs(i_trial) - 0.5)) < 0 || (probs(i_trial) + step - 0.03 * (probs(i_trial) - 0.5)) > 1
-    		
-            step = randn*0.1; %if value >1, draw again
-            
-        end
-        
-        %Concatenate probability values
-    	probs(i_trial+1) = probs(i_trial) + step - 0.03 * (probs(i_trial) - 0.5);
-
-    end
-
-    
-    
-%% determine correct choices depending on probabilities
-
-%rand returns a single uniformly distributed random number in the interval (0,1).
-gpt = rand(sim_par.trials, 1) < probs; %1 left, 2 right
-
-good_opt = ones(sim_par.trials,1);
-good_opt(gpt) = 2;
-%correct = probs > .5;
-correct = double(probs > .5);
-correct = correct + 1; 
-
-
+sim_par.inputs = rdm_wlk.inputs;
+sim_par.correct_option = rdm_wlk.correct_option;
+sim_par.reward_grid = rdm_wlk.reward_grid;
+sim_par.probs = rdm_wlk.probs;
 
 %% Simulate Reward-Learning with separate Q values for left / right
 
 % Loop through list of beta values
-for i_p = 1:length(beta_values)
-
-    %initialize variables
-    RPE = zeros(sim_par.trials,2);
-    Q = zeros(sim_par.trials,2);
-    choice_p = zeros(sim_par.trials,2);
-    reward = zeros(sim_par.trials,1);
-    choice = zeros(sim_par.trials,1);
-    good_opt = good_opt;
-    beta = beta_values(i_p);
-
+for i_p = 1:size(beta_values,1) % loop through agents
     
-    %Loop through trials
-    for i_t = 1:sim_par.trials
+    for i_r = 1:size(beta_values,2) %loop through runs
 
-        %choice
-        %1 = OptA, 2 = OptB
-        if i_t == 1
-            choice(i_t,1) = randi(2,1); %first choice is random
-        else
-            %[Q_max, best_opt] = max(Q(i_t,:));
-            %choice(i_t,1) = best_opt;
+    sim_par_run.alpha = sim_par.alpha;
+    sim_par_run.beta = beta_values(i_p,i_r);
+    sim_par_run.reward_grid = sim_par.reward_grid(:,:,i_r);
+    sim_par_run.inputs = sim_par.inputs(:,i_r);
+    sim_par_run.correct_option = sim_par.correct_option(:,i_r);
+    sim_par_run.gamma = sim_par.gamma;
+    sim_par_run.n_trials = sim_par.trials;
+    sim_par_run.dist = dist(i_p);
+    
 
-            OptA = exp(Q(i_t,1)*beta);
-            OptB = exp(Q(i_t,2)*beta);
-            choice_p(i_t,1) = OptA / (OptA + OptB);
-            choice_p(i_t,2) = OptB / (OptA + OptB);
 
-            [Q_max, pref_opt] = max(choice_p(i_t,:));
+out = Simulate_influenca(sim_par_run);
 
-            if rand < choice_p(i_t,1)
-               choice(i_t,1) = 1;
-            else
-               choice(i_t,1) = 2;
-            end
+% Get summary results of each agent/run
+summary_simulation(i_p,:,i_r) = [i_p,i_r,dist(i_p),sim_par_run.alpha, sim_par_run.beta, sum(out(:,7))*50/sim_par.trials, sum(out(:,8))];
 
-    %        choice(i_t,1) = pref_opt;
+ID = ones(sim_par.trials,1)*i_p;
+run = ones(sim_par.trials,1)*i_r;
 
-        end
+data_sub = [ID,run,out];
 
-  
-        %calculate outcome "reward" based on p_win and p_lose
-        if choice(i_t,1) == good_opt(i_t,1) %good option
-            reward(i_t,1) = 1;
-        else
-            reward(i_t,1) = -1;
-        end
+%Store summary and trialwise simulation
+data = [data;data_sub];
 
-        %compute reward prediction errors, RPEs, according to delta rule,
-        %single update
-        RPE(i_t,choice(i_t,1)) = reward(i_t,1) - Q(i_t,choice(i_t,1));
 
-        %update Q values according to the learning rate, alpha, and the RPEs
-        if i_t < sim_par.trials
-            Q(i_t+1,1) = Q(i_t,1) + sim_par.alpha * RPE(i_t,1);
-            Q(i_t+1,2) = Q(i_t,2) + sim_par.alpha * RPE(i_t,2);
-        end
 
     end
 
- correct_ground = correct == choice;
+end
+
+data_fit = data(:,[8,9,11,13,14,1,2,3,4,5]); %Reduce simulated data to the coloumns relevant for fitting
+data_table = array2table(data, 'VariableNames',{'ID','Run','Trial','Group','beta','Estimated_Prob','RPE_prob','choice','reward','correct_choice','draw_blue','rewarded_choice','reward_blue','reward_green'}); %Get a table to export for R / nicer plotting 
+% !! correct choice = choice == real prob>.5, good_option is the rewarded option for each trial 
+end
+%% Fit model 
+if fit_data
+if simulate_data
+ 
+    D = data_fit;
+else
+    % Load empirical data (make sure coloumns have same order/content as simulated data) 
+    %data_path and IDs to analyze have to be defined
+    IDs = [1,4]
+    % IDs = []; for all IDs leave IIDs empty
+    data_path = 'C:\Users\Anne\Documents\GitHub\EKF_RewardLearning\app_data_trial-07-02-2019.xlsx'
+    D = read_app_data(IDs,data_path);
+end
+
+runs = 1;
+tmp = unique(D(:,6));
+fitted_data_plot =[];
+for i_p = 1:length(unique(D(:,6)))
+   
+    DID = D(D(:,6)==tmp(i_p),:);
     
-%original units
-eval_fit(i_p,:) = [dist(i_p),sim_par.alpha, beta, sum(reward)/sim_par.trials, sum(correct_ground)];
-time = 1:sim_par.trials;
-beta_vector = ones(sim_par.trials,1)*beta;
+    for i_r = 1:length(unique(DID(:,7)))
+        
+    cD = DID(DID(:,7)==i_r,:);
+    ID = cD(1,6);
+    Run = cD(1,7);
+    x0 = [0.5, 2];
+    %options = optimset('Display','off');
+    %options = optimoptions(@fminunc,'Algorithm','quasi-newton','Display','off');
+    options = optimoptions('fmincon','Display','off','Algorithm','sqp');
+    %[xout,fval,exitflag,output] = fminunc(@(x)fit_model(x,D),x0,options);
+    
+    mcon.A = [];
+    mcon.b = [];
+    mcon.lb = [0,0];
+    mcon.ub = [1,Inf];
+    
+    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,cD),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
+    estp.alpha = xout(:,1); %1./(1+exp(xout(:,1)));
+    estp.beta = xout(:,2); %exp(xout(:,2));
+
+  
+ %   eval_fit(runs,:) = [ID, Run, sim_par.n_trials, sim_par.alpha, sim_par.beta, estp.alpha, estp.beta, estp.alpha - sim_par.alpha, estp.beta - sim_par.beta, fval];
+    eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval];
+ 
+    fitted_data(runs) = get_fitted_values(cD, estp);
+    fitted_data_plot = [fitted_data_plot;fitted_data(runs).run];
+    runs = runs + 1;
+    end
+end
 
 
-data_sub = [time', repmat(dist(i_p),sim_par.trials,1),Q,RPE,choice, reward, correct_ground,good_opt];
-data = [data;data_sub];
+
+save_str = ['Fitted_results.mat']; %Differentiate simulated and real?
+save(save_str,'fitted_data_plot')
 
 end
+%% Plotting
 
 % Some preliminary plotting
 % barplots beta
@@ -259,7 +267,7 @@ close all
 
 
 
-end
+
 
 
 

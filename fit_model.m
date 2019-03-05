@@ -16,7 +16,7 @@ beta = x(2);
 gamma = 1;
 
 %Parse Data
-rew = D(:,2);
+%rew = D(:,2);
 choice = D(:,1);
 draw_blue = D(:,3);
 rew_grid = D(:,4:5);
@@ -35,7 +35,7 @@ for t = 1:length(choice)
     %RPE(t,choice(t,1)) = rew(t,1) - Q(t,choice(t,1));
     
     % Compute reward prediction error RPE
-    RPE(t,choice(t,1)) = rew(t,1) - Q(t,choice(t,1));
+ %   RPE(t,choice(t,1)) = rew(t,1) - Q(t,choice(t,1));
 
     % Compute outcome prediction error
     RPE_alpha(t,1) = draw_blue(t,1) - est_prob(t,1);
