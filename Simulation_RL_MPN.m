@@ -16,12 +16,12 @@ simulate_data = 1;
 fit_data = 1;
 
 %data_out = pwd;
-data_out = 'C:\Users\Monja\PC_EKF\04_Review\RL\Output\';
-
+%data_out = 'C:\Users\Monja\PC_EKF\04_Review\RL\Output\';
+data_out = 'C:\Users\Monja\PC_EKF\04_Review\App_Analysis';
 
 %% Define simulation parameters
 %  define parameters
-sim_par.beta_mean = [5, 5, 1, 1];
+sim_par.beta_mean = [3, 3, 1.5, 1.5];
 sim_par.beta_std = [0, 0.9, 0, 0.9];
 sim_par.alpha = 0.6;
 
@@ -88,6 +88,14 @@ for i_p = 1:size(beta_values,1) % loop through agents
 
 
 out = Simulate_influenca(sim_par_run);
+% 'out' contains 'data_sub' derived from Simulation
+% (1)Trial ID / (2)Distribution ID / (3)Beta value [sim_par] / 
+% (4)est_prob / (5)RPE_alpha /
+% (6)choice / (7)reward/50 /
+% (8)correct_ground / (9)double(inputs==1) / (10)inputs /
+% (11&12)reward_grid optA and optB
+
+
 
 % Get summary results of each agent/run
 summary_simulation(i_p,:,i_r) = [i_p,i_r,dist(i_p),sim_par_run.alpha, sim_par_run.beta, sum(out(:,7))*50/sim_par.trials, sum(out(:,8))];
@@ -118,8 +126,8 @@ if simulate_data
 else
     % Load empirical data (make sure coloumns have same order/content as simulated data) 
     %data_path and IDs to analyze have to be defined
-    IDs = [1,4]
-    % IDs = []; for all IDs leave IIDs empty
+    IDs = [1,4];
+    % IDs = []; for all IDs leave IDs empty
     data_path = 'C:\Users\Anne\Documents\GitHub\EKF_RewardLearning\app_data_trial-07-02-2019.xlsx'
     D = read_app_data(IDs,data_path);
 end
@@ -188,77 +196,104 @@ end
 
 
 
-if draw_output == 1
+ if draw_output == 1
 
+%Plot simulations
+
+
+dat = data(:,[1:5]);
+simpar_betas = dat((dat(:,3)==1),:);
+
+
+x = simpar_betas(:,5);
+y = eval_fit(:,5);
+group = simpar_betas(:,4);
+
+gscatter(x,y,group)
+axis([0 6 0 6])
+    ylabel('estimated betas')
+    xlabel('simulated betas')
+    diag = refline([1 0]);
+    %diag.Color = 'r';
     
-    out_fig1 = [data_out,'simulation_scatter_',num2str(i_inputs),'.png'];
-    %figure.Position=[0 0 [] []];
-    figure(1)
-
-    subplot(3,2,1)
-    hold on
-    bar(1:4,m_beta)
-    errorbar(1:4,m_beta,std_beta,'.')
-    ylabel('beta')
-
-    subplot(3,2,2)
-    hold on
-    bar(1:4,performance)
-    errorbar(1:4,performance,std_performance,'.')
-    ylabel('trials rewarded')
-
-    subplot(3,2,3:6)
-    hold on
-    scatter(eval_fit(:,3),eval_fit(:,5),[],eval_fit(:,1),'filled')
-    legend({'high_b low_VAR','high_b high_VAR','low_b low_VAR','low_b highVAR'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
-    ylabel('correct choices')
-    xlabel('beta')
-     saveas(gcf,out_fig1)
+%    refline(1,0)
 
 
 
- if i_dist <= 4
- 
-    out_fig2 = [data_out,'simulation_Qvalues',num2str(i_inputs),'.png'];
-    %figure.Position=[0 0 [] []];
-    figure(2)
-    
-    for i_plot=1:i_dist
-        
-        plot_data=data((data(:,2)==i_plot),:);
-        plot_data=plot_data(1:(sim_par.trials*2),:);
-        label_fig = ['beta_type_',num2str(i_plot)];
 
-        subplot(i_dist,1,i_plot)
-        hold on
-        plot(1:sim_par.trials,plot_data(1:sim_par.trials,3))
-        plot(1:sim_par.trials,plot_data(sim_par.trials+1:sim_par.trials*2,3))
 
-        ylabel('Q-value OptA')
-        xlabel(label_fig)
-
-        % subplot(2,2,3:4)
-        % hold on
-        % plot(1:sim_par.trials,Q_1_trial)
-        % %legend({'high low','high high','low low','low high'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
-        % legend({'high_b low_VAR','high_b high_VAR','low_b low_VAR','low_b highVAR'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
-        % ylabel('Q_Value_trials')
-
-        saveas(gcf,out_fig2)
-
-    end
-    
+% 
+%     
+%     out_fig1 = [data_out,'simulation_scatter_',num2str(i_inputs),'.png'];
+%     %figure.Position=[0 0 [] []];
+%     figure(1)
+% 
+%     subplot(3,2,1)
+%     hold on
+%     bar(1:4,m_beta)
+%     errorbar(1:4,m_beta,std_beta,'.')
+%     ylabel('beta')
+% 
+%     subplot(3,2,2)
+%     hold on
+%     bar(1:4,performance)
+%     errorbar(1:4,performance,std_performance,'.')
+%     ylabel('trials rewarded')
+% 
+%     subplot(3,2,3:6)
+%     hold on
+%     scatter(eval_fit(:,3),eval_fit(:,5),[],eval_fit(:,1),'filled')
+%     legend({'high_b low_VAR','high_b high_VAR','low_b low_VAR','low_b highVAR'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
+%     ylabel('correct choices')
+%     xlabel('beta')
+%      saveas(gcf,out_fig1)
+% 
+% 
+% 
+%  if i_dist <= 4
+%  
+%     out_fig2 = [data_out,'simulation_Qvalues',num2str(i_inputs),'.png'];
+%     %figure.Position=[0 0 [] []];
+%     figure(2)
+%     
+%     for i_plot=1:i_dist
+%         
+%         plot_data=data((data(:,2)==i_plot),:);
+%         plot_data=plot_data(1:(sim_par.trials*2),:);
+%         label_fig = ['beta_type_',num2str(i_plot)];
+% 
+%         subplot(i_dist,1,i_plot)
+%         hold on
+%         plot(1:sim_par.trials,plot_data(1:sim_par.trials,3))
+%         plot(1:sim_par.trials,plot_data(sim_par.trials+1:sim_par.trials*2,3))
+% 
+%         ylabel('Q-value OptA')
+%         xlabel(label_fig)
+% 
+%         % subplot(2,2,3:4)
+%         % hold on
+%         % plot(1:sim_par.trials,Q_1_trial)
+%         % %legend({'high low','high high','low low','low high'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
+%         % legend({'high_b low_VAR','high_b high_VAR','low_b low_VAR','low_b highVAR'},'Location', 'NorthWest','FontSize',7,'Orientation','horizontal')
+%         % ylabel('Q_Value_trials')
+% 
+%         saveas(gcf,out_fig2)
+% 
+%     end
+%     
+%  end
+%  
+%  
  end
- 
- 
-end
 
 
 
 
 % Write output in csv format to designated diectory (set path at line 16/17)
-out_trials = [data_out,'simulation_RL_trials_',num2str(i_inputs),'.csv'];
-out = [data_out,'simulation_RL_',num2str(i_inputs),'.csv'];
+% out_trials = [data_out,'simulation_RL_trials_',num2str(i_inputs),'.csv'];
+% out = [data_out,'simulation_RL_',num2str(i_inputs),'.csv'];
+out_trials = [data_out,'simulation_RL_trials.csv'];
+out = [data_out,'simulation_RL_est.csv'];
 csvwrite(out_trials, data)
 csvwrite(out, eval_fit)
 
