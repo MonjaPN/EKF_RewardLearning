@@ -161,7 +161,7 @@ for i_p = 1:length(unique(D(:,6)))
 
   
  %   eval_fit(runs,:) = [ID, Run, sim_par.n_trials, sim_par.alpha, sim_par.beta, estp.alpha, estp.beta, estp.alpha - sim_par.alpha, estp.beta - sim_par.beta, fval];
-    eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval, sim_par.beta_mean, i_dist];
+    eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval, cD(1,10), cD(1,9)]; % This only works for simulated data
  
     fitted_data(runs) = get_fitted_values(cD, estp);
     fitted_data_plot = [fitted_data_plot;fitted_data(runs).run];
@@ -175,6 +175,13 @@ save_str = ['Fitted_results.mat']; %Differentiate simulated and real?
 save(save_str,'fitted_data_plot')
 
 end
+%% Simulate food intake
+
+simulated_cal = simulate_food_intake(eval_fit(:,5));
+
+
+
+
 %% Plotting
 
 % Some preliminary plotting
