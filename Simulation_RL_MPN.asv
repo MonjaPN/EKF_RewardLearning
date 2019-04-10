@@ -8,7 +8,9 @@
 % Modified Anne Kühnel 15.02.2019
 %================================================================
 
-%clear
+clear
+
+time.start = datetime;
 
 % set =1, if plots and data .csv should be written
 draw_output = 1;
@@ -16,17 +18,17 @@ simulate_data = 1;
 fit_data = 1;
 
 %data_out = pwd;
-%data_out = 'C:\Users\Monja\PC_EKF\04_Review\RL\Output\';
-data_out = 'C:\Users\Monja\PC_EKF\04_Review\App_Analysis';
+data_out = 'C:\Users\Monja\PC_EKF\04_Review\RL\Output\';
+%data_out = 'C:\Users\Monja\PC_EKF\04_Review\App_Analysis';
 
 %% Define simulation parameters
 %  define parameters
-sim_par.beta_mean = [3, 3, 1.5, 1.5];
-sim_par.beta_std = [0, 0.9, 0, 0.9];
-sim_par.alpha = 0.6;
+sim_par.beta_mean = [4, 4, 2, 2];
+sim_par.beta_std = [0, 1.5, 0, 1.5];
+sim_par.alpha = 0.25;
 
 sim_par.trials = 150; % trials per run
-sim_par.simulations = 10; % agents per group
+sim_par.simulations = 100; % agents per group
 sim_par.runs = 30; % runs per agent
 sim_par.gamma = 1;
 
@@ -71,44 +73,55 @@ sim_par.probs = rdm_wlk.probs;
 
 %% Simulate Reward-Learning with separate Q values for left / right
 
+% Prepare simulation output
+summary_simulation = zeros(size(beta_values,1),7,size(beta_values,2));
+data = zeros(size(beta_values,1)*sim_par.trials*sim_par.runs,14);
+count = 1;
+
+
 % Loop through list of beta values
 for i_p = 1:size(beta_values,1) % loop through agents
     
     for i_r = 1:size(beta_values,2) %loop through runs
+        
+        % display progress
+        disp(['SIMULATE: ', 'subject ',num2str(i_p),' run ', num2str(i_r)])
 
-    sim_par_run.alpha = sim_par.alpha;
-    sim_par_run.beta = beta_values(i_p,i_r);
-    sim_par_run.reward_grid = sim_par.reward_grid(:,:,i_r);
-    sim_par_run.inputs = sim_par.inputs(:,i_r);
-    sim_par_run.correct_option = sim_par.correct_option(:,i_r);
-    sim_par_run.gamma = sim_par.gamma;
-    sim_par_run.n_trials = sim_par.trials;
-    sim_par_run.dist = dist(i_p);
+        % Initialize simulation parameters per subject
+        sim_par_run.alpha = sim_par.alpha;
+        sim_par_run.beta = beta_values(i_p,i_r);
+        sim_par_run.reward_grid = sim_par.reward_grid(:,:,i_r);
+        sim_par_run.inputs = sim_par.inputs(:,i_r);
+        sim_par_run.correct_option = sim_par.correct_option(:,i_r);
+        sim_par_run.gamma = sim_par.gamma;
+        sim_par_run.n_trials = sim_par.trials;
+        sim_par_run.dist = dist(i_p);
     
 
 
-out = Simulate_influenca(sim_par_run);
-% 'out' contains 'data_sub' derived from Simulation
-% (1)Trial ID / (2)Distribution ID / (3)Beta value [sim_par] / 
-% (4)est_prob / (5)RPE_alpha /
-% (6)choice / (7)reward/50 /
-% (8)correct_ground / (9)double(inputs==1) / (10)inputs /
-% (11&12)reward_grid optA and optB
+        out = Simulate_influenca(sim_par_run);
+        % 'out' contains 'data_sub' derived from Simulation
+        % (1)Trial ID / (2)Distribution ID / (3)Beta value [sim_par] / 
+        % (4)est_prob / (5)RPE_alpha /
+        % (6)choice / (7)reward/50 /
+        % (8)correct_ground / (9)double(inputs==1) / (10)inputs /
+        % (11&12)reward_grid optA and optB
 
 
 
-% Get summary results of each agent/run
-summary_simulation(i_p,:,i_r) = [i_p,i_r,dist(i_p),sim_par_run.alpha, sim_par_run.beta, sum(out(:,7))*50/sim_par.trials, sum(out(:,8))];
+        % Get summary results of each agent/run
+        summary_simulation(i_p,:,i_r) = [i_p,i_r,dist(i_p),sim_par_run.alpha, sim_par_run.beta, sum(out(:,7))*50/sim_par.trials, sum(out(:,8))];
 
-ID = ones(sim_par.trials,1)*i_p;
-run = ones(sim_par.trials,1)*i_r;
+        ID = ones(sim_par.trials,1)*i_p;
+        run = ones(sim_par.trials,1)*i_r;
 
-data_sub = [ID,run,out];
+        data_sub = [ID,run,out];
 
-%Store summary and trialwise simulation
-data = [data;data_sub];
-
-
+        % Store summary and trialwise simulation
+        data(count:count+149,:) = data_sub;
+        
+        
+        count = count+150;
 
     end
 
@@ -120,54 +133,79 @@ data_table = array2table(data, 'VariableNames',{'ID','Run','Trial','Group','beta
 end
 %% Fit model 
 if fit_data
-if simulate_data
- 
-    D = data_fit;
-else
-    % Load empirical data (make sure coloumns have same order/content as simulated data) 
-    %data_path and IDs to analyze have to be defined
-    IDs = [1,4];
-    % IDs = []; for all IDs leave IDs empty
-    data_path = 'C:\Users\Anne\Documents\GitHub\EKF_RewardLearning\app_data_trial-07-02-2019.xlsx'
-    D = read_app_data(IDs,data_path);
-end
+    
+    if simulate_data
 
-runs = 1;
-tmp = unique(D(:,6));
-fitted_data_plot =[];
+        D = data_fit;
+    else
+        % Load empirical data (make sure coloumns have same order/content as simulated data) 
+        %data_path and IDs to analyze have to be defined
+        IDs = [1,4];
+        % IDs = []; for all IDs leave IDs empty
+        data_path = 'C:\Users\Anne\Documents\GitHub\EKF_RewardLearning\app_data_trial-07-02-2019.xlsx'
+        D = read_app_data(IDs,data_path);
+    end
+
+    runs = 1;
+    tmp = unique(D(:,6));
+    fitted_data_plot =[];
+
+    %Prepare output
+    eval_fit = zeros(size(beta_values,1),8);
+    %data = zeros(size(beta_values,1)*sim_par.trial*sim_par.runs,14);
+    %count = 1;
+
+
 for i_p = 1:length(unique(D(:,6)))
    
     DID = D(D(:,6)==tmp(i_p),:);
     
     for i_r = 1:length(unique(DID(:,7)))
         
-    cD = DID(DID(:,7)==i_r,:);
-    ID = cD(1,6);
-    Run = cD(1,7);
-    x0 = [0.5, 2];
-    %options = optimset('Display','off');
-    %options = optimoptions(@fminunc,'Algorithm','quasi-newton','Display','off');
-    options = optimoptions('fmincon','Display','off','Algorithm','sqp');
-    %[xout,fval,exitflag,output] = fminunc(@(x)fit_model(x,D),x0,options);
-    
-    mcon.A = [];
-    mcon.b = [];
-    mcon.lb = [0,0];
-    mcon.ub = [1,Inf];
-    
-    [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,cD),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
-    estp.alpha = xout(:,1); %1./(1+exp(xout(:,1)));
-    estp.beta = xout(:,2); %exp(xout(:,2));
+        % display progress
+        disp(['FIT: ', 'subject ',num2str(i_p),' run ', num2str(i_r)])
+        
+        cD = DID(DID(:,7)==i_r,:);
+        ID = cD(1,6);
+        Run = cD(1,7);
+        x0 = [0.5, 2];
+        %options = optimset('Display','off');
+        %options = optimoptions(@fminunc,'Algorithm','quasi-newton','Display','off');
+        options = optimoptions('fmincon','Display','off','Algorithm','sqp');
+        %[xout,fval,exitflag,output] = fminunc(@(x)fit_model(x,D),x0,options);
 
-  
- %   eval_fit(runs,:) = [ID, Run, sim_par.n_trials, sim_par.alpha, sim_par.beta, estp.alpha, estp.beta, estp.alpha - sim_par.alpha, estp.beta - sim_par.beta, fval];
-    eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval, sim_par.beta_mean, sim_par.beta_std];
- 
-    fitted_data(runs) = get_fitted_values(cD, estp);
-    fitted_data_plot = [fitted_data_plot;fitted_data(runs).run];
-    runs = runs + 1;
+        mcon.A = [];
+        mcon.b = [];
+        mcon.lb = [0,0];
+        mcon.ub = [1,Inf];
+
+        [xout,fval,mcon.exitflag,mcon.out,mcon.lambda,mcon.grad,mcon.hessian] = fmincon(@(x)fit_model(x,cD),x0,mcon.A,mcon.b,[],[],mcon.lb,mcon.ub,[], options);
+        estp.alpha = xout(:,1); %1./(1+exp(xout(:,1)));
+        estp.beta = xout(:,2); %exp(xout(:,2));
+
+
+        % Otuput
+        if simulate_data
+            % For simulated data: attach 
+            % cD(1,10) = data(:,5) = sim_par.beta
+            % cD(1,9) = data(:,4) = dist_ID
+            eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval, cD(1,10), cD(1,9)]; 
+
+        else
+
+            eval_fit(runs,:) = [ID, Run, size(cD,1), estp.alpha, estp.beta, fval, NaN, NaN];
+
+        end
+    
+%     fitted_data(runs) = get_fitted_values(cD, estp);
+%     fitted_data_plot = [fitted_data_plot;fitted_data(runs).run];
+        runs = runs + 1;
+        
     end
+    
 end
+
+
 
 
 
@@ -175,6 +213,53 @@ save_str = ['Fitted_results.mat']; %Differentiate simulated and real?
 save(save_str,'fitted_data_plot')
 
 end
+
+
+time.end = datetime;
+time.diff = time.end - time.start;
+disp(time.diff)
+
+
+%% Simulate food intake
+
+simulated_cal = simulate_food_intake(eval_fit(:,5));
+
+value_rep = [eval_fit(:,[1,5,7,8]), simulated_cal];
+
+var_rep = zeros(max(eval_fit(:,1)),8);
+
+for i_s = 1:max(value_rep(:,1))
+
+ subj_data = value_rep((value_rep(:,1)==i_s),:);
+    
+ 
+ var_rep(i_s,1)=subj_data(1,1);
+ var_rep(i_s,2) = subj_data(1,4);
+ var_rep(i_s,3:5) = mean(subj_data(:,[2,3,5]));
+ var_rep(i_s,6:8) = var(subj_data(:,[2,3,5]));
+    
+end
+
+var_rep = array2table(var_rep, 'VariableNames',{'ID','Distribution','fitted_beta_mean','simulated_beta_mean','simulated_daily_calories_mean','fitted_beta_mean','simulated_beta_mean','simulated_daily_calories_var'})
+%% Save output
+info.date = datestr(now, 'yyyy-mm-dd');
+
+% Write output in csv format to designated diectory (set path at line 16/17)
+% out_trials = [data_out,'simulation_RL_trials_',num2str(i_inputs),'.csv'];
+% out = [data_out,'simulation_RL_',num2str(i_inputs),'.csv'];
+out_sim_trial_c = [data_out,'simulation_RL_trials.csv'];
+out_fit_run_c = [data_out,'fit_RL_est.csv'];
+
+out_sim_trial_m = [data_out, 'simulation_RL_trials.mat'];
+out_fit_run_m = [data_out,'fit_RL_est.mat'];
+
+save(out_sim_trial_m, 'data', 'info')
+save(out_fit_run_m, 'eval_fit', 'info', 'simulated_cal')
+csvwrite(out_sim_trial_c, data)
+csvwrite(out_fit_run_c, eval_fit)
+
+
+
 %% Plotting
 
 % Some preliminary plotting
@@ -289,13 +374,7 @@ axis([0 6 0 6])
 
 
 
-% Write output in csv format to designated diectory (set path at line 16/17)
-% out_trials = [data_out,'simulation_RL_trials_',num2str(i_inputs),'.csv'];
-% out = [data_out,'simulation_RL_',num2str(i_inputs),'.csv'];
-out_trials = [data_out,'simulation_RL_trials.csv'];
-out = [data_out,'simulation_RL_est.csv'];
-csvwrite(out_trials, data)
-csvwrite(out, eval_fit)
+
 
 close all
 
