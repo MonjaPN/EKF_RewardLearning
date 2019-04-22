@@ -222,7 +222,7 @@ disp(time.diff)
 
 %% Simulate food intake
 
-simulated_cal = simulate_food_intake(eval_fit(:,5));
+simulated_cal = simulate_food_intake(eval_fit(:,5), eval_fit(:,1)); %First Argument beta, second (optional) Argument ID --> varies regressionweight b1 for ID not for each beta.
 
 value_rep = [eval_fit(:,[1,5,7,8]), simulated_cal];
 
