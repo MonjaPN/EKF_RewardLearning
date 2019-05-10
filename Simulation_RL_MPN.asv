@@ -242,19 +242,20 @@ for i_s = 1:max(value_rep(:,1))
     
 end
 
-Plot_Simulated_beta_mean = var_rep(:,4);
+Plot_Simulated_beta_mean = var_rep.simulated_beta_mean;
 for i_plot = 1 : length(Plot_Simulated_beta_mean)
    
     if mod(Plot_Simulated_beta_mean(i_plot), 2) == 0
         
-        Plot_Simulated_beta_mean(i_plot) = NaN;
+        Plot_Simulated_beta_mean(i_plot) = 0;
         
     end
+    
 end
 
 var_rep(:,9) = Plot_Simulated_beta_mean;
 
-var_rep = array2table(var_rep, 'VariableNames',{'ID','Distribution','fitted_beta_mean','simulated_beta_mean','simulated_daily_calories_mean','fitted_beta_var','simulated_beta_var','simulated_daily_calories_var', 'Plot_sim_beta_mean'});
+var_rep = array2table(var_rep, 'VariableNames',{'ID','Distribution','fitted_beta_mean','simulated_beta_mean','simulated_daily_calories_mean','fitted_beta_var','simulated_beta_var','simulated_daily_calories_var'});
 
 
 %% Save output
@@ -274,7 +275,7 @@ save(out_fit_run_m, 'eval_fit', 'info', 'simulated_cal')
 csvwrite(out_sim_trial_c, data)
 csvwrite(out_fit_run_c, eval_fit)
 
-writetable(var_rep, [data_out, 'sim_beta_vars.csv'])
+writetable(var_rep, [data_out, 'sim_betar_vars.csv'])
 
 
 

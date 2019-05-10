@@ -12,9 +12,7 @@
 % =================
 % TO DO
 % 
-%add 'run'variable to simulation output
 %align simulation outoput and app data
-%fit_model script
 %Conversion output-> table
 %Export output
 % =================
